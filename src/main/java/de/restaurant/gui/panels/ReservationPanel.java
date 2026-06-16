@@ -17,6 +17,7 @@ import java.util.List;
 /**
  * GUI-Panel für die Reservierungsverwaltung.
  * Ermöglicht das Anlegen, Anzeigen und Stornieren von Tischreservierungen.
+ * Enthält jetzt einen interaktiven Saalplan zur visuellen Tischwahl.
  */
 public class ReservationPanel extends JPanel implements Refreshable {
 
@@ -24,15 +25,19 @@ public class ReservationPanel extends JPanel implements Refreshable {
     private final ReservationService reservationService = new ReservationService();
     private final CustomerService    customerService    = new CustomerService();
 
-    // ---- Tabelle ----
+    // ---- Saalplan & Tabelle ----
+    private SaalplanPanel saalplanPanel;
     private JTable resTable;
     private DefaultTableModel tableModel;
+    private JPanel centerCardPanel;
+    private CardLayout cardLayout;
 
     // ---- Formular ----
     private JComboBox<Customer> cbCustomer;
     private JSpinner spTableNumber, spGuestCount;
     private JTextField tfDate, tfTime, tfNotes;
-    private JButton btnAdd, btnCancel, btnClear, btnFilterToday;
+    private JButton btnAdd, btnCancel, btnClear, btnFilterToday, btnToggleView;
+    private boolean showingSaalplan = true;
 
     private static final String[] COLUMNS = {
         "ID", "Datum", "Uhrzeit", "Tisch", "Kunde", "Personen", "Notizen"
@@ -44,14 +49,15 @@ public class ReservationPanel extends JPanel implements Refreshable {
         setBorder(new EmptyBorder(15, 15, 15, 15));
         setBackground(new Color(248, 249, 255));
 
-        buildTable();
+        // Zuerst das Formular initialisieren, da der Saalplan darauf verweist (spTableNumber)
         buildFormPanel();
+        buildTable();
         loadData();
     }
 
     // ---- UI-Aufbau ----
 
-    /** Erstellt die Reservierungstabelle */
+    /** Erstellt die Reservierungstabelle und den Saalplan in einem CardLayout */
     private void buildTable() {
         tableModel = new DefaultTableModel(COLUMNS, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
@@ -69,8 +75,22 @@ public class ReservationPanel extends JPanel implements Refreshable {
         resTable.getColumnModel().getColumn(5).setMaxWidth(70);
 
         JScrollPane sp = new JScrollPane(resTable);
-        sp.setBorder(BorderFactory.createTitledBorder("Reservierungsübersicht"));
-        add(sp, BorderLayout.CENTER);
+        sp.setBorder(BorderFactory.createTitledBorder("Reservierungsliste"));
+
+        // Interaktiven Saalplan erstellen
+        saalplanPanel = new SaalplanPanel();
+        saalplanPanel.setTableSelectionListener(tableNum -> {
+            spTableNumber.setValue(tableNum);
+        });
+
+        // CardLayout für das Umschalten
+        cardLayout = new CardLayout();
+        centerCardPanel = new JPanel(cardLayout);
+        centerCardPanel.setBackground(new Color(248, 249, 255));
+        centerCardPanel.add(saalplanPanel, "SAALPLAN");
+        centerCardPanel.add(sp, "TABLE");
+
+        add(centerCardPanel, BorderLayout.CENTER);
     }
 
     /** Erstellt das Formular zum Anlegen neuer Reservierungen */
@@ -145,13 +165,17 @@ public class ReservationPanel extends JPanel implements Refreshable {
         btnPanel.add(btnClear);
         formPanel.add(btnPanel, gbc);
 
-        // Filter-Button oben links
-        btnFilterToday = createButton("Heute anzeigen", new Color(70, 100, 160));
-        JPanel topBtn = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        // Filter- und Switch-Buttons oben links
+        JPanel topBtn = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
         topBtn.setBackground(new Color(248, 249, 255));
-        topBtn.add(btnFilterToday);
+        
+        btnFilterToday = createButton("Heute anzeigen", new Color(70, 100, 160));
         JButton btnAll = createButton("Alle anzeigen", new Color(100, 100, 120));
+        btnToggleView  = createButton("📋 Listenansicht anzeigen", new Color(110, 110, 130));
+        
+        topBtn.add(btnFilterToday);
         topBtn.add(btnAll);
+        topBtn.add(btnToggleView);
         add(topBtn, BorderLayout.NORTH);
 
         add(formPanel, BorderLayout.EAST);
@@ -162,8 +186,44 @@ public class ReservationPanel extends JPanel implements Refreshable {
         btnClear.addActionListener(e       -> clearForm());
         btnFilterToday.addActionListener(e -> filterToday());
         btnAll.addActionListener(e         -> loadData());
+        btnToggleView.addActionListener(e  -> toggleView());
+
+        // Hinzufügen von Fokus- und Action-Listenern, damit der Saalplan bei Datumsänderung aktualisiert wird
+        tfDate.addActionListener(e -> updateFloorPlan());
+        tfDate.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusLost(java.awt.event.FocusEvent e) {
+                updateFloorPlan();
+            }
+        });
 
         loadCustomers();
+    }
+
+    /** Umschalten zwischen Saalplan und Tabelle */
+    private void toggleView() {
+        showingSaalplan = !showingSaalplan;
+        if (showingSaalplan) {
+            cardLayout.show(centerCardPanel, "SAALPLAN");
+            btnToggleView.setText("📋 Listenansicht anzeigen");
+        } else {
+            cardLayout.show(centerCardPanel, "TABLE");
+            btnToggleView.setText("🗺 Interaktiver Saalplan");
+        }
+    }
+
+    /** Aktualisiert die Farbbelegung des Saalplans basierend auf dem eingetragenen Datum */
+    private void updateFloorPlan() {
+        if (saalplanPanel == null) return;
+        try {
+            LocalDate date = LocalDate.parse(tfDate.getText().trim());
+            List<Reservation> dayReservations = reservationService.getReservationsByDate(date);
+            saalplanPanel.setReservations(dayReservations, date);
+        } catch (Exception e) {
+            // Fallback auf heute
+            List<Reservation> dayReservations = reservationService.getReservationsByDate(LocalDate.now());
+            saalplanPanel.setReservations(dayReservations, LocalDate.now());
+        }
     }
 
     // ---- Aktionen ----
@@ -175,18 +235,21 @@ public class ReservationPanel extends JPanel implements Refreshable {
         customerService.getAllCustomers().forEach(cbCustomer::addItem);
     }
 
-    /** Lädt alle Reservierungen in die Tabelle */
+    /** Lädt alle Reservierungen in die Tabelle und aktualisiert den Saalplan */
     private void loadData() {
         tableModel.setRowCount(0);
         List<Reservation> list = reservationService.getAllReservations();
         fillTable(list);
+        updateFloorPlan();
     }
 
     /** Zeigt nur die heutigen Reservierungen */
     private void filterToday() {
         tableModel.setRowCount(0);
+        tfDate.setText(LocalDate.now().toString());
         List<Reservation> list = reservationService.getReservationsByDate(LocalDate.now());
         fillTable(list);
+        updateFloorPlan();
     }
 
     /** Füllt die Tabelle mit einer Reservierungsliste */
@@ -215,6 +278,14 @@ public class ReservationPanel extends JPanel implements Refreshable {
             int guestCount      = (int) spGuestCount.getValue();
             String notes        = tfNotes.getText();
 
+            // Prüfen, ob Tisch an diesem Datum bereits belegt ist
+            List<Reservation> dayReservations = reservationService.getReservationsByDate(date);
+            for (Reservation res : dayReservations) {
+                if (res.getTableNumber() == tableNumber) {
+                    throw new ValidationException("Tisch #" + tableNumber + " ist am " + date + " bereits reserviert!");
+                }
+            }
+
             Reservation r = reservationService.createReservation(customer, tableNumber, date, time, guestCount, notes);
             JOptionPane.showMessageDialog(this,
                     "Reservierung #" + r.getId() + " erfolgreich angelegt!",
@@ -231,10 +302,40 @@ public class ReservationPanel extends JPanel implements Refreshable {
 
     /** Storniert die ausgewählte Reservierung */
     private void cancelReservation() {
-        int row = resTable.getSelectedRow();
-        if (row < 0) { showError("Bitte eine Reservierung auswählen."); return; }
+        int id = -1;
+        
+        if (showingSaalplan) {
+            // Aus dem Saalplan stornieren
+            int tableNum = saalplanPanel.getSelectedTableNumber();
+            if (tableNum < 1) {
+                showError("Bitte wählen Sie zuerst einen Tisch auf dem Saalplan aus.");
+                return;
+            }
+            
+            try {
+                LocalDate date = LocalDate.parse(tfDate.getText().trim());
+                List<Reservation> dayReservations = reservationService.getReservationsByDate(date);
+                for (Reservation res : dayReservations) {
+                    if (res.getTableNumber() == tableNum) {
+                        id = res.getId();
+                        break;
+                    }
+                }
+            } catch (Exception e) {
+                // date parse error
+            }
+            
+            if (id == -1) {
+                showError("Dieser Tisch ist am ausgewählten Datum nicht reserviert.");
+                return;
+            }
+        } else {
+            // Aus der Tabelle stornieren
+            int row = resTable.getSelectedRow();
+            if (row < 0) { showError("Bitte eine Reservierung in der Liste auswählen."); return; }
+            id = (int) tableModel.getValueAt(row, 0);
+        }
 
-        int id = (int) tableModel.getValueAt(row, 0);
         int confirm = JOptionPane.showConfirmDialog(this,
                 "Reservierung #" + id + " wirklich stornieren?",
                 "Stornieren bestätigen", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
@@ -242,6 +343,7 @@ public class ReservationPanel extends JPanel implements Refreshable {
         if (confirm == JOptionPane.YES_OPTION) {
             reservationService.cancelReservation(id);
             loadData();
+            clearForm();
         }
     }
 
@@ -254,6 +356,9 @@ public class ReservationPanel extends JPanel implements Refreshable {
         spGuestCount.setValue(2);
         tfNotes.setText("");
         resTable.clearSelection();
+        if (saalplanPanel != null) {
+            saalplanPanel.setSelectedTableNumber(-1);
+        }
     }
 
     private void showError(String msg) {
