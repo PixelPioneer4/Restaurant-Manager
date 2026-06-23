@@ -90,3 +90,10 @@ CREATE TABLE IF NOT EXISTS expenses (
     expense_date TEXT NOT NULL,
     description  TEXT
 );
+
+CREATE TABLE IF NOT EXISTS menu_item_ingredients (
+    menu_item_id  INTEGER NOT NULL REFERENCES menu_items(id),
+    ingredient_id INTEGER NOT NULL REFERENCES ingredients(id),
+    amount_needed REAL    NOT NULL,
+    PRIMARY KEY (menu_item_id, ingredient_id)
+);
