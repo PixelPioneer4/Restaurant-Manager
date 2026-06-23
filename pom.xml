@@ -63,4 +63,33 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>installer</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.panteleyev</groupId>
+                        <artifactId>jpackage-maven-plugin</artifactId>
+                        <version>1.6.5</version>
+                        <configuration>
+                            <name>RestaurantSystem</name>
+                            <appVersion>1.0.0</appVersion>
+                            <vendor>TrimFl</vendor>
+                            <destination>target/installer</destination>
+                            <mainJar>RestaurantSystem-1.0.0-jar-with-dependencies.jar</mainJar>
+                            <input>target</input>
+                            <type>EXE</type>
+                            <winMenu>true</winMenu>
+                            <winShortcut>true</winShortcut>
+                            <winDirChooser>true</winDirChooser>
+                            <winMenuGroup>RestaurantSystem</winMenuGroup>
+                            <description>Restaurant Management System by TrimFl</description>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
