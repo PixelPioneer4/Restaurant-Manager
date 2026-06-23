@@ -31,7 +31,7 @@ public class InvoicePanel extends JPanel implements Refreshable {
     private DefaultTableModel orderTableModel;
 
     // ---- Buttons ----
-    private JButton btnCreateInvoice, btnMarkPaid;
+    private JButton btnCreateInvoice, btnMarkPaid, btnPrintPdf;
     private JComboBox<String> cbPaymentMethod;
 
     // ---- Detail-Labels ----
@@ -90,7 +90,12 @@ public class InvoicePanel extends JPanel implements Refreshable {
 
         // Klick auf Rechnung → Details anzeigen
         invoiceTable.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) showInvoiceDetails();
+            if (!e.getValueIsAdjusting()) {
+                showInvoiceDetails();
+                if (btnPrintPdf != null) {
+                    btnPrintPdf.setEnabled(invoiceTable.getSelectedRow() >= 0);
+                }
+            }
         });
 
         JScrollPane sp = new JScrollPane(invoiceTable);
@@ -128,17 +133,20 @@ public class InvoicePanel extends JPanel implements Refreshable {
         actionPanel.add(detailPanel, BorderLayout.CENTER);
 
         // Buttons
-        JPanel btnPanel = new JPanel(new GridLayout(3, 1, 0, 8));
+        JPanel btnPanel = new JPanel(new GridLayout(4, 1, 0, 8));
         btnPanel.setBackground(new Color(248, 249, 255));
         btnPanel.setBorder(new EmptyBorder(5, 0, 0, 0));
 
         btnCreateInvoice = createButton("🧾 Rechnung erstellen", new Color(46, 139, 87));
         cbPaymentMethod  = new JComboBox<>(new String[]{"BAR", "KARTE", "GUTSCHEIN", "RECHNUNG"});
         btnMarkPaid      = createButton("✅ Als bezahlt markieren", new Color(70, 130, 180));
+        btnPrintPdf      = createButton("📄 PDF drucken", new Color(110, 80, 160));
+        btnPrintPdf.setEnabled(false);
 
         btnPanel.add(btnCreateInvoice);
         btnPanel.add(cbPaymentMethod);
         btnPanel.add(btnMarkPaid);
+        btnPanel.add(btnPrintPdf);
         actionPanel.add(btnPanel, BorderLayout.SOUTH);
 
         bottomPanel.add(actionPanel, BorderLayout.EAST);
@@ -147,6 +155,7 @@ public class InvoicePanel extends JPanel implements Refreshable {
         // Event-Handler
         btnCreateInvoice.addActionListener(e -> createInvoice());
         btnMarkPaid.addActionListener(e      -> markPaid());
+        btnPrintPdf.addActionListener(e      -> printPdf());
     }
 
     /** Erstellt das Rechnungsdetail-Panel */
@@ -248,6 +257,37 @@ public class InvoicePanel extends JPanel implements Refreshable {
             loadData();
         } catch (ValidationException e) {
             showError(e.getMessage());
+        }
+    }
+
+    /** Gibt die aktuell in der Tabelle ausgewählte Rechnung zurück */
+    private Invoice getSelectedInvoice() {
+        int row = invoiceTable.getSelectedRow();
+        if (row < 0) return null;
+        int invoiceId = (int) invoiceTableModel.getValueAt(row, 0);
+        return invoiceService.getAllInvoices().stream()
+                .filter(inv -> inv.getId() == invoiceId)
+                .findFirst()
+                .orElse(null);
+    }
+
+    /** Erzeugt ein PDF der ausgewählten Rechnung und öffnet einen Erfolgsdialog */
+    private void printPdf() {
+        Invoice invoice = getSelectedInvoice();
+        if (invoice == null) {
+            showError("Bitte eine Rechnung auswählen.");
+            return;
+        }
+
+        try {
+            de.restaurant.service.PdfService pdfService = new de.restaurant.service.PdfService();
+            java.io.File file = pdfService.generateInvoicePdf(invoice);
+            JOptionPane.showMessageDialog(this,
+                    "PDF erfolgreich erstellt:\n" + file.getAbsolutePath(),
+                    "PDF-Druck",
+                    JOptionPane.INFORMATION_MESSAGE);
+        } catch (Exception e) {
+            showError("Fehler beim PDF-Export: " + e.getMessage());
         }
     }
 
