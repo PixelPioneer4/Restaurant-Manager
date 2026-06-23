@@ -57,12 +57,13 @@ CREATE TABLE IF NOT EXISTS reservations (
 
 -- Rechnungen
 CREATE TABLE IF NOT EXISTS invoices (
-    id           INTEGER PRIMARY KEY AUTOINCREMENT,
-    order_id     INTEGER NOT NULL UNIQUE,
-    total_amount REAL    NOT NULL,
-    tax_amount   REAL    NOT NULL,  -- 19% MwSt.
-    issue_date   TEXT    NOT NULL,
-    paid         INTEGER DEFAULT 0, -- 0 = offen, 1 = bezahlt
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_id       INTEGER NOT NULL UNIQUE,
+    total_amount   REAL    NOT NULL,
+    tax_amount     REAL    NOT NULL,  -- 19% MwSt.
+    issue_date     TEXT    NOT NULL,
+    paid           INTEGER DEFAULT 0, -- 0 = offen, 1 = bezahlt
+    payment_method TEXT    DEFAULT 'BAR',
     FOREIGN KEY (order_id) REFERENCES orders(id)
 );
 
@@ -97,3 +98,6 @@ CREATE TABLE IF NOT EXISTS menu_item_ingredients (
     amount_needed REAL    NOT NULL,
     PRIMARY KEY (menu_item_id, ingredient_id)
 );
+
+-- Spalte payment_method zu invoices hinzufügen (falls nicht existiert)
+ALTER TABLE invoices ADD COLUMN payment_method TEXT DEFAULT 'BAR';

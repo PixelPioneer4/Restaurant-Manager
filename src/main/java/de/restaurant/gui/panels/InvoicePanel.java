@@ -32,12 +32,13 @@ public class InvoicePanel extends JPanel implements Refreshable {
 
     // ---- Buttons ----
     private JButton btnCreateInvoice, btnMarkPaid;
+    private JComboBox<String> cbPaymentMethod;
 
     // ---- Detail-Labels ----
     private JLabel lblInvoiceId, lblTotal, lblNet, lblTax, lblStatus, lblDate;
 
     private static final String[] INVOICE_COLS = {
-        "Rech.-Nr.", "Best.-Nr.", "Datum", "Netto (€)", "MwSt. 19% (€)", "Gesamt (€)", "Status"
+        "Rech.-Nr.", "Best.-Nr.", "Datum", "Netto (€)", "MwSt. 19% (€)", "Gesamt (€)", "Status", "Methode"
     };
     private static final String[] ORDER_COLS = {
         "ID", "Tisch", "Datum", "Status", "Betrag (€)"
@@ -68,6 +69,24 @@ public class InvoicePanel extends JPanel implements Refreshable {
         invoiceTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
         invoiceTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         invoiceTable.setGridColor(new Color(220, 220, 235));
+
+        // Zeilenfarbe je nach Bezahlstatus (hellgrün / hellrot)
+        invoiceTable.setDefaultRenderer(Object.class, new javax.swing.table.DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable t, Object val,
+                    boolean sel, boolean focus, int row, int col) {
+                Component c = super.getTableCellRendererComponent(t, val, sel, focus, row, col);
+                String status = (String) t.getValueAt(row, 6);
+                if (status != null && status.contains("Bezahlt")) {
+                    c.setBackground(sel ? new Color(76, 175, 80, 200) : new Color(220, 245, 220));
+                    c.setForeground(Color.BLACK);
+                } else {
+                    c.setBackground(sel ? new Color(244, 67, 54, 200) : new Color(255, 220, 220));
+                    c.setForeground(Color.BLACK);
+                }
+                return c;
+            }
+        });
 
         // Klick auf Rechnung → Details anzeigen
         invoiceTable.getSelectionModel().addListSelectionListener(e -> {
@@ -109,14 +128,16 @@ public class InvoicePanel extends JPanel implements Refreshable {
         actionPanel.add(detailPanel, BorderLayout.CENTER);
 
         // Buttons
-        JPanel btnPanel = new JPanel(new GridLayout(2, 1, 0, 8));
+        JPanel btnPanel = new JPanel(new GridLayout(3, 1, 0, 8));
         btnPanel.setBackground(new Color(248, 249, 255));
         btnPanel.setBorder(new EmptyBorder(5, 0, 0, 0));
 
         btnCreateInvoice = createButton("🧾 Rechnung erstellen", new Color(46, 139, 87));
+        cbPaymentMethod  = new JComboBox<>(new String[]{"BAR", "KARTE", "GUTSCHEIN", "RECHNUNG"});
         btnMarkPaid      = createButton("✅ Als bezahlt markieren", new Color(70, 130, 180));
 
         btnPanel.add(btnCreateInvoice);
+        btnPanel.add(cbPaymentMethod);
         btnPanel.add(btnMarkPaid);
         actionPanel.add(btnPanel, BorderLayout.SOUTH);
 
@@ -176,7 +197,8 @@ public class InvoicePanel extends JPanel implements Refreshable {
                     String.format("%.2f", inv.getNetAmount()),
                     String.format("%.2f", inv.getTaxAmount()),
                     String.format("%.2f", inv.getTotalAmount()),
-                    inv.isPaid() ? "✅ Bezahlt" : "⏳ Offen"
+                    inv.isPaid() ? "✅ Bezahlt" : "⏳ Offen",
+                    inv.getPaymentMethod()
             });
         }
 
@@ -219,9 +241,14 @@ public class InvoicePanel extends JPanel implements Refreshable {
         if (row < 0) { showError("Bitte eine Rechnung auswählen."); return; }
 
         int invoiceId = (int) invoiceTableModel.getValueAt(row, 0);
-        invoiceService.markAsPaid(invoiceId);
-        JOptionPane.showMessageDialog(this, "Rechnung als bezahlt markiert.", "Erfolg", JOptionPane.INFORMATION_MESSAGE);
-        loadData();
+        String selectedMethod = (String) cbPaymentMethod.getSelectedItem();
+        try {
+            invoiceService.markAsPaid(invoiceId, selectedMethod);
+            JOptionPane.showMessageDialog(this, "Rechnung als bezahlt markiert (" + selectedMethod + ").", "Erfolg", JOptionPane.INFORMATION_MESSAGE);
+            loadData();
+        } catch (ValidationException e) {
+            showError(e.getMessage());
+        }
     }
 
     /** Zeigt Details der ausgewählten Rechnung */

@@ -105,7 +105,16 @@ public class DatabaseConnection {
             for (String statement : sql.split(";")) {
                 String trimmed = statement.trim();
                 if (!trimmed.isEmpty()) {
-                    stmt.execute(trimmed);
+                    try {
+                        stmt.execute(trimmed);
+                    } catch (SQLException e) {
+                        // ALTER TABLE Fehler ignorieren (z. B. wenn die Spalte bereits existiert)
+                        if (trimmed.toUpperCase().contains("ALTER TABLE")) {
+                            System.out.println("Info: ALTER TABLE nicht ausgeführt/fehlgeschlagen: " + e.getMessage());
+                        } else {
+                            throw e;
+                        }
+                    }
                 }
             }
 

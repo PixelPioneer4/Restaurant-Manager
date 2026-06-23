@@ -64,11 +64,28 @@ public class InvoiceService {
     }
 
     /**
-     * Markiert eine Rechnung als bezahlt.
+     * Markiert eine Rechnung als bezahlt (mit Standard-Methode BAR).
      * @param invoiceId Die Rechnungs-ID
      */
     public void markAsPaid(int invoiceId) {
-        invoiceDAO.markAsPaid(invoiceId);
+        invoiceDAO.markAsPaid(invoiceId, "BAR");
+    }
+
+    /**
+     * Markiert eine Rechnung mit einer bestimmten Zahlungsmethode als bezahlt.
+     * @param invoiceId Die Rechnungs-ID
+     * @param paymentMethod Die Zahlungsmethode (BAR, KARTE, GUTSCHEIN, RECHNUNG)
+     * @throws ValidationException bei ungültiger Zahlungsmethode
+     */
+    public void markAsPaid(int invoiceId, String paymentMethod) throws ValidationException {
+        if (paymentMethod == null || 
+            (!paymentMethod.equals("BAR") && 
+             !paymentMethod.equals("KARTE") && 
+             !paymentMethod.equals("GUTSCHEIN") && 
+             !paymentMethod.equals("RECHNUNG"))) {
+            throw new ValidationException("Ungültige Zahlungsmethode. Erlaubt: BAR, KARTE, GUTSCHEIN, RECHNUNG");
+        }
+        invoiceDAO.markAsPaid(invoiceId, paymentMethod);
     }
 
     /**
