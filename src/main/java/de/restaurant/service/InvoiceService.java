@@ -55,6 +55,15 @@ public class InvoiceService {
     }
 
     /**
+     * Erstellt eine Rechnung für eine übergebene Bestellung.
+     * @param order Die Bestellung
+     * @return Die erstellte Rechnung
+     */
+    public Invoice createForOrder(Order order) {
+        return invoiceDAO.insertForOrder(order);
+    }
+
+    /**
      * Markiert eine Rechnung als bezahlt.
      * @param invoiceId Die Rechnungs-ID
      */

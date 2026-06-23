@@ -63,6 +63,16 @@ public class InvoiceDAO {
     }
 
     /**
+     * Erstellt eine neue Rechnung für eine Bestellung.
+     * @param order Die Bestellung
+     * @return Die neu erstellte Rechnung mit zugewiesener ID
+     */
+    public Invoice insertForOrder(Order order) {
+        Invoice invoice = new Invoice(order, LocalDateTime.now());
+        return insert(invoice);
+    }
+
+    /**
      * Markiert eine Rechnung als bezahlt.
      * @param invoiceId Die Rechnungs-ID
      */

@@ -20,10 +20,12 @@ public class OrderService {
 
     /** Datenzugriffsobjekt für Bestellungen */
     private final OrderDAO orderDAO;
+    private final InvoiceService invoiceService;
 
     /** Konstruktor: erzeugt den OrderDAO */
     public OrderService() {
         this.orderDAO = new OrderDAO();
+        this.invoiceService = new InvoiceService();
     }
 
     /**
@@ -49,7 +51,9 @@ public class OrderService {
         order.setItems(items);
 
         // In der Datenbank speichern
-        return orderDAO.insert(order);
+        Order savedOrder = orderDAO.insert(order);
+        invoiceService.createForOrder(savedOrder);
+        return savedOrder;
     }
 
     /**
