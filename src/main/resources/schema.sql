@@ -92,6 +92,13 @@ CREATE TABLE IF NOT EXISTS expenses (
     description  TEXT
 );
 
+CREATE TABLE IF NOT EXISTS users (
+    id       INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT    NOT NULL UNIQUE,
+    password TEXT    NOT NULL,
+    role     TEXT    NOT NULL DEFAULT 'STAFF'
+);
+
 CREATE TABLE IF NOT EXISTS menu_item_ingredients (
     menu_item_id  INTEGER NOT NULL REFERENCES menu_items(id),
     ingredient_id INTEGER NOT NULL REFERENCES ingredients(id),

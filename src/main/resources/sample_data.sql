@@ -81,3 +81,9 @@ INSERT OR IGNORE INTO menu_item_ingredients (menu_item_id, ingredient_id, amount
     -- Hähnchen Tikka (ID 10) -> Hähnchenbrust 0.25kg, Salz 0.01kg
     (10, 6, 0.25),
     (10, 5, 0.01);
+
+-- Beispiellogin-Daten für Benutzer
+INSERT OR IGNORE INTO users (id, username, password, role) VALUES
+    (1, 'admin',   'admin123',   'ADMIN'),
+    (2, 'manager', 'manager123', 'MANAGER'),
+    (3, 'staff',   'staff123',   'STAFF');

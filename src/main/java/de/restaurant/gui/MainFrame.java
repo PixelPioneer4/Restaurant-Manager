@@ -129,11 +129,46 @@ public class MainFrame extends JFrame {
 
         add(tabbedPane, BorderLayout.CENTER);
 
-        // Statusleiste
+        // Statusleiste mit Abmelden-Button
+        JPanel southPanel = new JPanel(new BorderLayout(5, 0));
+        southPanel.setBorder(BorderFactory.createEtchedBorder());
+        southPanel.setBackground(new Color(240, 240, 245));
+
         JLabel statusBar = new JLabel("  Restaurant Management System v1.0  |  Bereit");
-        statusBar.setBorder(BorderFactory.createEtchedBorder());
         statusBar.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        add(statusBar, BorderLayout.SOUTH);
+
+        JButton btnLogout = new JButton("Abmelden");
+        btnLogout.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        btnLogout.setFocusPainted(false);
+        btnLogout.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        btnLogout.addActionListener(e -> {
+            int result = JOptionPane.showConfirmDialog(
+                    MainFrame.this,
+                    "Wirklich abmelden?",
+                    "Abmelden",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE
+            );
+            if (result == JOptionPane.YES_OPTION) {
+                dispose();
+                de.restaurant.service.AuthService.logout();
+                
+                // Login-Dialog erneut anzeigen
+                LoginDialog login = new LoginDialog(null);
+                login.setVisible(true);
+                if (login.isLoginSuccessful()) {
+                    MainFrame frame = new MainFrame();
+                    frame.setVisible(true);
+                } else {
+                    System.exit(0);
+                }
+            }
+        });
+
+        southPanel.add(statusBar, BorderLayout.WEST);
+        southPanel.add(btnLogout, BorderLayout.EAST);
+        add(southPanel, BorderLayout.SOUTH);
     }
 
     /**
