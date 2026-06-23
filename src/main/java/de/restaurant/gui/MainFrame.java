@@ -24,6 +24,7 @@ public class MainFrame extends JFrame {
         new Color(190, 140,  20),  // 🧾 Rechnungen   – Gold
         new Color(40,  160, 160),  // 📊 Statistiken  – Petrol
         new Color(180, 80,  120),  // 📦 Inventar     – Pink/Weinrot
+        new Color(150, 40,   40),  // 💸 Ausgaben     – Dunkelrot
     };
 
     private static final Color TAB_TEXT       = Color.WHITE;
@@ -40,6 +41,7 @@ public class MainFrame extends JFrame {
     private InvoicePanel     invoicePanel;
     private StatisticsPanel  statisticsPanel;
     private InventoryPanel   inventoryPanel;
+    private ExpensePanel     expensePanel;
 
     /** Konstruktor: Erstellt und konfiguriert das Hauptfenster */
     public MainFrame() {
@@ -88,6 +90,7 @@ public class MainFrame extends JFrame {
         invoicePanel     = new InvoicePanel();
         statisticsPanel  = new StatisticsPanel();
         inventoryPanel   = new InventoryPanel();
+        expensePanel     = new ExpensePanel();
     }
 
     /** Fügt die Panels zum TabbedPane hinzu und setzt individuelle Tab-Renderer */
@@ -99,12 +102,13 @@ public class MainFrame extends JFrame {
             "📅  Reservierungen",
             "🧾  Rechnungen",
             "📊  Statistiken",
-            "📦  Inventar"
+            "📦  Inventar",
+            "💸  Ausgaben"
         };
         Component[] panels = {
             menuPanel, orderPanel, customerPanel,
             reservationPanel, invoicePanel, statisticsPanel,
-            inventoryPanel
+            inventoryPanel, expensePanel
         };
 
         for (int i = 0; i < titles.length; i++) {
