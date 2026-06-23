@@ -104,11 +104,20 @@ public class MenuPanel extends JPanel implements Refreshable {
         menuTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         menuTable.setGridColor(new Color(220, 220, 235));
         menuTable.setShowGrid(true);
+        menuTable.setFillsViewportHeight(true); // Fill viewport height for a clean cohesive look
 
         // Spaltenbreiten
         menuTable.getColumnModel().getColumn(0).setMaxWidth(50);   // ID
         menuTable.getColumnModel().getColumn(3).setMaxWidth(100);  // Preis
         menuTable.getColumnModel().getColumn(5).setMaxWidth(90);   // Verfügbar
+
+        // Set proportional preferred widths to fill horizontal area nicely
+        menuTable.getColumnModel().getColumn(0).setPreferredWidth(50);
+        menuTable.getColumnModel().getColumn(1).setPreferredWidth(200);
+        menuTable.getColumnModel().getColumn(2).setPreferredWidth(120);
+        menuTable.getColumnModel().getColumn(3).setPreferredWidth(100);
+        menuTable.getColumnModel().getColumn(4).setPreferredWidth(350);
+        menuTable.getColumnModel().getColumn(5).setPreferredWidth(90);
 
         // Alignments: Left-align textual columns, right-align Price (index 3)
         DefaultTableCellRenderer leftRenderer = new DefaultTableCellRenderer();
@@ -134,7 +143,8 @@ public class MenuPanel extends JPanel implements Refreshable {
 
         JScrollPane scrollPane = new JScrollPane(menuTable);
         scrollPane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-        
+        scrollPane.getViewport().setBackground(Color.WHITE); // White background under empty rows
+
         // Modern styled container for table
         JPanel tableContainer = new JPanel(new BorderLayout());
         tableContainer.setBackground(Color.WHITE);
@@ -175,6 +185,7 @@ public class MenuPanel extends JPanel implements Refreshable {
         // Name
         tfName = new JTextField();
         tfName.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        tfName.setPreferredSize(new Dimension(150, 36));
         addInputEffects(tfName);
         formGrid.add(createFormGroup("Name *", tfName));
 
@@ -184,17 +195,20 @@ public class MenuPanel extends JPanel implements Refreshable {
         cbCategory.setBorder(BorderFactory.createLineBorder(new Color(222, 226, 230), 1));
         cbCategory.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         cbCategory.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        cbCategory.setPreferredSize(new Dimension(150, 36));
         formGrid.add(createFormGroup("Kategorie *", cbCategory));
 
         // Preis
         tfPrice = new JTextField();
         tfPrice.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        tfPrice.setPreferredSize(new Dimension(100, 36));
         addInputEffects(tfPrice);
         formGrid.add(createFormGroup("Preis (€) *", tfPrice));
 
         // Beschreibung
         tfDescription = new JTextField();
         tfDescription.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        tfDescription.setPreferredSize(new Dimension(200, 36));
         addInputEffects(tfDescription);
         formGrid.add(createFormGroup("Beschreibung", tfDescription));
 
@@ -204,14 +218,15 @@ public class MenuPanel extends JPanel implements Refreshable {
         chkAvailable.setBackground(Color.WHITE);
         chkAvailable.setFocusPainted(false);
         chkAvailable.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        JPanel chkWrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 5));
+        chkAvailable.setPreferredSize(new Dimension(20, 36));
+        JPanel chkWrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         chkWrapper.setBackground(Color.WHITE);
         chkWrapper.add(chkAvailable);
         formGrid.add(createFormGroup("Verfügbar", chkWrapper));
 
         formPanel.add(formGrid, BorderLayout.CENTER);
 
-        // Create buttons
+        // Create buttons with 38px premium uniform height
         btnAdd    = createButton("💾 Speichern / Hinzufügen", new Color(13, 110, 253));
         btnClear  = createButton("✖ Leeren", new Color(110, 120, 129));
         btnDelete = createButton("🗑 Löschen", new Color(220, 53, 69));
@@ -403,7 +418,7 @@ public class MenuPanel extends JPanel implements Refreshable {
         Color borderHover  = new Color(173, 181, 189); // #adb5bd
         Color borderFocus  = new Color(13, 110, 253);  // #0d6efd
         
-        javax.swing.border.Border padding = BorderFactory.createEmptyBorder(6, 10, 6, 10);
+        javax.swing.border.Border padding = BorderFactory.createEmptyBorder(8, 12, 8, 12);
         
         tf.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(borderNormal, 1, true),

@@ -94,14 +94,14 @@ public class MainFrame extends JFrame {
             "Ausgaben"
         };
         String[] displayTitles = {
-            "📋  Speisekarte",
-            "🛒  Bestellungen",
-            "👤  Kunden",
-            "📅  Reservierungen",
-            "🧾  Rechnungen",
-            "📊  Statistiken",
-            "📦  Inventar",
-            "💸  Ausgaben"
+            "📋   Speisekarte",
+            "🛒   Bestellungen",
+            "👤   Kunden",
+            "📅   Reservierungen",
+            "🧾   Rechnungen",
+            "📊   Statistiken",
+            "📦   Inventar",
+            "💸   Ausgaben"
         };
         Component[] panels = {
             menuPanel, orderPanel, customerPanel,
@@ -119,10 +119,10 @@ public class MainFrame extends JFrame {
         brandPanel.setBackground(new Color(30, 38, 64));
         brandPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(255, 255, 255, 25)));
         
-        JLabel brandLabel = new JLabel("🍽  Restaurant System");
-        brandLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        JLabel brandLabel = new JLabel("🍽   Restaurant System");
+        brandLabel.setFont(new Font("Segoe UI", Font.BOLD, 17));
         brandLabel.setForeground(Color.WHITE);
-        brandLabel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        brandLabel.setBorder(BorderFactory.createEmptyBorder(24, 24, 24, 24));
         brandPanel.add(brandLabel, BorderLayout.CENTER);
         sidebar.add(brandPanel, BorderLayout.NORTH);
 
@@ -145,7 +145,7 @@ public class MainFrame extends JFrame {
             navPanel.add(btn);
             
             // Fixed button height/spacing
-            navPanel.add(Box.createRigidArea(new Dimension(0, 4)));
+            navPanel.add(Box.createRigidArea(new Dimension(0, 2)));
 
             btn.addActionListener(e -> {
                 // Switch Card
@@ -169,7 +169,7 @@ public class MainFrame extends JFrame {
         // Sidebar Footer Panel with Logout Button
         JPanel footerPanel = new JPanel(new BorderLayout());
         footerPanel.setBackground(new Color(30, 38, 64));
-        footerPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        footerPanel.setBorder(BorderFactory.createEmptyBorder(24, 24, 24, 24));
 
         JButton btnLogout = new JButton("Abmelden");
         btnLogout.setFont(new Font("Segoe UI", Font.BOLD, 13));
@@ -180,7 +180,7 @@ public class MainFrame extends JFrame {
         btnLogout.setContentAreaFilled(false);
         btnLogout.setOpaque(true);
         btnLogout.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnLogout.setPreferredSize(new Dimension(200, 36));
+        btnLogout.setPreferredSize(new Dimension(192, 40));
 
         btnLogout.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
@@ -249,7 +249,7 @@ public class MainFrame extends JFrame {
 
         public SidebarButton(String text) {
             super(text);
-            setFont(new Font("Segoe UI", Font.PLAIN, 14));
+            setFont(new Font("Segoe UI Semibold", Font.PLAIN, 13));
             setForeground(TEXT_COLOR);
             setFocusPainted(false);
             setBorderPainted(false);
@@ -257,9 +257,9 @@ public class MainFrame extends JFrame {
             setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             setHorizontalAlignment(SwingConstants.LEFT);
             // Limit width, pad text
-            setMaximumSize(new Dimension(240, 45));
-            setPreferredSize(new Dimension(240, 45));
-            setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20));
+            setMaximumSize(new Dimension(240, 48));
+            setPreferredSize(new Dimension(240, 48));
+            setBorder(BorderFactory.createEmptyBorder(0, 24, 0, 24));
 
             // Hover effect
             addMouseListener(new java.awt.event.MouseAdapter() {
