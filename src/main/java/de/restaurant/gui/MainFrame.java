@@ -133,6 +133,12 @@ public class MainFrame extends JFrame {
         navPanel.setBorder(BorderFactory.createEmptyBorder(15, 0, 15, 0));
 
         navButtons = new SidebarButton[titles.length];
+        
+        // Page Header Label (final so it can be updated inside action listeners)
+        final JLabel pageTitleLabel = new JLabel("Speisekarte");
+        pageTitleLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        pageTitleLabel.setForeground(new Color(33, 37, 41)); // #212529
+
         for (int i = 0; i < titles.length; i++) {
             final int index = i;
             final String cardName = titles[i];
@@ -156,6 +162,9 @@ public class MainFrame extends JFrame {
                     navButtons[j].setActive(j == index);
                 }
                 
+                // Update page title
+                pageTitleLabel.setText(cardName);
+                
                 // Refresh data if Panel is Refreshable
                 Component activePanel = panels[index];
                 if (activePanel instanceof Refreshable) {
@@ -166,33 +175,15 @@ public class MainFrame extends JFrame {
         navPanel.add(Box.createVerticalGlue());
         sidebar.add(navPanel, BorderLayout.CENTER);
 
-        // Sidebar Footer Panel with Logout Button
+        // Sidebar Footer Panel with Logout Button styled like other buttons
         JPanel footerPanel = new JPanel(new BorderLayout());
         footerPanel.setBackground(new Color(30, 38, 64));
-        footerPanel.setBorder(BorderFactory.createEmptyBorder(24, 24, 24, 24));
+        footerPanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(255, 255, 255, 25)), // separator line
+            BorderFactory.createEmptyBorder(15, 0, 15, 0)
+        ));
 
-        JButton btnLogout = new JButton("Abmelden");
-        btnLogout.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        btnLogout.setForeground(new Color(255, 128, 128)); // #ff8080
-        btnLogout.setBackground(new Color(30, 38, 64));
-        btnLogout.setFocusPainted(false);
-        btnLogout.setBorder(BorderFactory.createLineBorder(new Color(255, 255, 255, 51), 1));
-        btnLogout.setContentAreaFilled(false);
-        btnLogout.setOpaque(true);
-        btnLogout.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btnLogout.setPreferredSize(new Dimension(192, 40));
-
-        btnLogout.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                btnLogout.setBackground(new Color(220, 53, 69, 25)); // rgba(220, 53, 69, 0.1)
-                btnLogout.setBorder(BorderFactory.createLineBorder(new Color(220, 53, 69), 1));
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                btnLogout.setBackground(new Color(30, 38, 64));
-                btnLogout.setBorder(BorderFactory.createLineBorder(new Color(255, 255, 255, 51), 1));
-            }
-        });
-
+        SidebarButton btnLogout = new SidebarButton("🚪   Abmelden");
         btnLogout.addActionListener(e -> {
             int result = JOptionPane.showConfirmDialog(
                     MainFrame.this,
@@ -216,18 +207,46 @@ public class MainFrame extends JFrame {
                 }
             }
         });
-
         footerPanel.add(btnLogout, BorderLayout.CENTER);
         sidebar.add(footerPanel, BorderLayout.SOUTH);
 
-        // Add Sidebar and Content Panel to Frame
+        // Main Workspace container on the right
+        JPanel mainWorkspace = new JPanel(new BorderLayout());
+        mainWorkspace.setBackground(new Color(248, 249, 255));
+
+        // Page Header Panel
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setBackground(Color.WHITE);
+        headerPanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(222, 226, 230)), // bottom line #dee2e6
+            BorderFactory.createEmptyBorder(15, 24, 15, 24)
+        ));
+
+        // Fetch user and role
+        de.restaurant.model.User currentUser = de.restaurant.service.AuthService.getCurrentUser();
+        String userText = "👤   Eingeloggt als: Gast";
+        if (currentUser != null) {
+            userText = "👤   Eingeloggt als: " + currentUser.getUsername() + " (" + currentUser.getRole() + ")";
+        }
+        JLabel userInfoLabel = new JLabel(userText);
+        userInfoLabel.setFont(new Font("Segoe UI Semibold", Font.PLAIN, 13));
+        userInfoLabel.setForeground(new Color(108, 117, 125)); // #6c757d
+
+        headerPanel.add(pageTitleLabel, BorderLayout.WEST);
+        headerPanel.add(userInfoLabel, BorderLayout.EAST);
+        
+        mainWorkspace.add(headerPanel, BorderLayout.NORTH);
+        mainWorkspace.add(contentPanel, BorderLayout.CENTER);
+
+        // Add Sidebar and Main Workspace to Frame
         add(sidebar, BorderLayout.WEST);
-        add(contentPanel, BorderLayout.CENTER);
+        add(mainWorkspace, BorderLayout.CENTER);
 
         // Select Speisekarte by default
         if (navButtons.length > 0) {
             navButtons[0].setActive(true);
             cardLayout.show(contentPanel, titles[0]);
+            pageTitleLabel.setText(titles[0]);
             // Refresh Speisekarte
             menuPanel.refresh();
         }

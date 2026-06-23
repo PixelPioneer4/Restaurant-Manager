@@ -178,16 +178,22 @@ public class MenuPanel extends JPanel implements Refreshable {
         titleLabel.setForeground(new Color(33, 37, 41));
         formPanel.add(titleLabel, BorderLayout.NORTH);
 
-        // Grid container for horizontal inputs
-        JPanel formGrid = new JPanel(new GridLayout(1, 5, 15, 0));
+        // Grid container for horizontal inputs using GridBagLayout for proportional column widths
+        JPanel formGrid = new JPanel(new GridBagLayout());
         formGrid.setBackground(Color.WHITE);
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(0, 0, 0, 15); // right spacing between columns
+        gbc.gridy = 0;
 
         // Name
         tfName = new JTextField();
         tfName.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         tfName.setPreferredSize(new Dimension(150, 36));
         addInputEffects(tfName);
-        formGrid.add(createFormGroup("Name *", tfName));
+        gbc.gridx = 0; gbc.weightx = 0.3;
+        formGrid.add(createFormGroup("Name *", tfName), gbc);
 
         // Kategorie
         cbCategory = new JComboBox<>(MenuService.CATEGORIES);
@@ -196,21 +202,24 @@ public class MenuPanel extends JPanel implements Refreshable {
         cbCategory.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         cbCategory.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         cbCategory.setPreferredSize(new Dimension(150, 36));
-        formGrid.add(createFormGroup("Kategorie *", cbCategory));
+        gbc.gridx = 1; gbc.weightx = 0.2;
+        formGrid.add(createFormGroup("Kategorie *", cbCategory), gbc);
 
         // Preis
         tfPrice = new JTextField();
         tfPrice.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         tfPrice.setPreferredSize(new Dimension(100, 36));
         addInputEffects(tfPrice);
-        formGrid.add(createFormGroup("Preis (€) *", tfPrice));
+        gbc.gridx = 2; gbc.weightx = 0.15;
+        formGrid.add(createFormGroup("Preis (€) *", tfPrice), gbc);
 
         // Beschreibung
         tfDescription = new JTextField();
         tfDescription.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         tfDescription.setPreferredSize(new Dimension(200, 36));
         addInputEffects(tfDescription);
-        formGrid.add(createFormGroup("Beschreibung", tfDescription));
+        gbc.gridx = 3; gbc.weightx = 0.25;
+        formGrid.add(createFormGroup("Beschreibung", tfDescription), gbc);
 
         // Verfügbar (Checkbox)
         chkAvailable = new JCheckBox();
@@ -222,7 +231,10 @@ public class MenuPanel extends JPanel implements Refreshable {
         JPanel chkWrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         chkWrapper.setBackground(Color.WHITE);
         chkWrapper.add(chkAvailable);
-        formGrid.add(createFormGroup("Verfügbar", chkWrapper));
+        
+        gbc.gridx = 4; gbc.weightx = 0.1;
+        gbc.insets = new Insets(0, 0, 0, 0); // last column has no right inset
+        formGrid.add(createFormGroup("Verfügbar", chkWrapper), gbc);
 
         formPanel.add(formGrid, BorderLayout.CENTER);
 
