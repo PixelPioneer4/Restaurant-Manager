@@ -15,23 +15,10 @@ import java.awt.event.WindowEvent;
  */
 public class MainFrame extends JFrame {
 
-    // ---- Tab-Farben (je ein warmer, unverwechselbarer Ton) ----
-    private static final Color[] TAB_COLORS = {
-        new Color(52, 120, 180),   // 📋 Speisekarte  – Stahlblau
-        new Color(210, 95,  45),   // 🛒 Bestellungen – Burnt Orange
-        new Color(60, 150,  80),   // 👤 Kunden       – Waldgrün
-        new Color(140,  60, 170),  // 📅 Reservierung – Violett
-        new Color(190, 140,  20),  // 🧾 Rechnungen   – Gold
-        new Color(40,  160, 160),  // 📊 Statistiken  – Petrol
-        new Color(180, 80,  120),  // 📦 Inventar     – Pink/Weinrot
-        new Color(150, 40,   40),  // 💸 Ausgaben     – Dunkelrot
-    };
-
-    private static final Color TAB_TEXT       = Color.WHITE;
-    private static final Color TAB_SELECTED_BORDER = new Color(255, 255, 255, 80);
-
     // ---- GUI-Komponenten ----
-    private JTabbedPane tabbedPane;
+    private CardLayout cardLayout;
+    private JPanel contentPanel;
+    private SidebarButton[] navButtons;
 
     // ---- Panel-Instanzen ----
     private MenuPanel        menuPanel;
@@ -81,7 +68,8 @@ public class MainFrame extends JFrame {
 
     /** Erstellt alle GUI-Komponenten */
     private void initializeComponents() {
-        tabbedPane = new JTabbedPane(JTabbedPane.TOP);
+        cardLayout = new CardLayout();
+        contentPanel = new JPanel(cardLayout);
 
         menuPanel        = new MenuPanel();
         orderPanel       = new OrderPanel();
@@ -93,9 +81,19 @@ public class MainFrame extends JFrame {
         expensePanel     = new ExpensePanel();
     }
 
-    /** Fügt die Panels zum TabbedPane hinzu und setzt individuelle Tab-Renderer */
+    /** Fügt die Panels zum Sidebar und CardLayout hinzu */
     private void layoutComponents() {
         String[] titles = {
+            "Speisekarte",
+            "Bestellungen",
+            "Kunden",
+            "Reservierungen",
+            "Rechnungen",
+            "Statistiken",
+            "Inventar",
+            "Ausgaben"
+        };
+        String[] displayTitles = {
             "📋  Speisekarte",
             "🛒  Bestellungen",
             "👤  Kunden",
@@ -111,36 +109,89 @@ public class MainFrame extends JFrame {
             inventoryPanel, expensePanel
         };
 
+        // Left Sidebar Container
+        JPanel sidebar = new JPanel(new BorderLayout());
+        sidebar.setBackground(new Color(30, 38, 64)); // #1e2640
+        sidebar.setPreferredSize(new Dimension(240, 0));
+
+        // Brand Logo Panel
+        JPanel brandPanel = new JPanel(new BorderLayout());
+        brandPanel.setBackground(new Color(30, 38, 64));
+        brandPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(255, 255, 255, 25)));
+        
+        JLabel brandLabel = new JLabel("🍽  Restaurant System");
+        brandLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        brandLabel.setForeground(Color.WHITE);
+        brandLabel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        brandPanel.add(brandLabel, BorderLayout.CENTER);
+        sidebar.add(brandPanel, BorderLayout.NORTH);
+
+        // Navigation Panel
+        JPanel navPanel = new JPanel();
+        navPanel.setLayout(new BoxLayout(navPanel, BoxLayout.Y_AXIS));
+        navPanel.setBackground(new Color(30, 38, 64));
+        navPanel.setBorder(BorderFactory.createEmptyBorder(15, 0, 15, 0));
+
+        navButtons = new SidebarButton[titles.length];
         for (int i = 0; i < titles.length; i++) {
-            tabbedPane.addTab(titles[i], panels[i]);
-            // Individuellen farbigen Tab-Renderer setzen
-            tabbedPane.setTabComponentAt(i, createTabLabel(titles[i], TAB_COLORS[i]));
+            final int index = i;
+            final String cardName = titles[i];
+            
+            // Add panel to CardLayout container
+            contentPanel.add(panels[i], cardName);
+            
+            SidebarButton btn = new SidebarButton(displayTitles[i]);
+            navButtons[i] = btn;
+            navPanel.add(btn);
+            
+            // Fixed button height/spacing
+            navPanel.add(Box.createRigidArea(new Dimension(0, 4)));
+
+            btn.addActionListener(e -> {
+                // Switch Card
+                cardLayout.show(contentPanel, cardName);
+                
+                // Update button active state colors
+                for (int j = 0; j < navButtons.length; j++) {
+                    navButtons[j].setActive(j == index);
+                }
+                
+                // Refresh data if Panel is Refreshable
+                Component activePanel = panels[index];
+                if (activePanel instanceof Refreshable) {
+                    ((Refreshable) activePanel).refresh();
+                }
+            });
         }
+        navPanel.add(Box.createVerticalGlue());
+        sidebar.add(navPanel, BorderLayout.CENTER);
 
-        // Tab-Wechsel → Daten aktualisieren
-        tabbedPane.addChangeListener(e -> {
-            Component selected = tabbedPane.getSelectedComponent();
-            if (selected instanceof Refreshable) {
-                ((Refreshable) selected).refresh();
-            }
-            // Alle Tab-Labels neu zeichnen (Highlight für aktiven Tab)
-            repaintTabs();
-        });
-
-        add(tabbedPane, BorderLayout.CENTER);
-
-        // Statusleiste mit Abmelden-Button
-        JPanel southPanel = new JPanel(new BorderLayout(5, 0));
-        southPanel.setBorder(BorderFactory.createEtchedBorder());
-        southPanel.setBackground(new Color(240, 240, 245));
-
-        JLabel statusBar = new JLabel("  Restaurant Management System v1.0  |  Bereit");
-        statusBar.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        // Sidebar Footer Panel with Logout Button
+        JPanel footerPanel = new JPanel(new BorderLayout());
+        footerPanel.setBackground(new Color(30, 38, 64));
+        footerPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         JButton btnLogout = new JButton("Abmelden");
-        btnLogout.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        btnLogout.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        btnLogout.setForeground(new Color(255, 128, 128)); // #ff8080
+        btnLogout.setBackground(new Color(30, 38, 64));
         btnLogout.setFocusPainted(false);
+        btnLogout.setBorder(BorderFactory.createLineBorder(new Color(255, 255, 255, 51), 1));
+        btnLogout.setContentAreaFilled(false);
+        btnLogout.setOpaque(true);
         btnLogout.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnLogout.setPreferredSize(new Dimension(200, 36));
+
+        btnLogout.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                btnLogout.setBackground(new Color(220, 53, 69, 25)); // rgba(220, 53, 69, 0.1)
+                btnLogout.setBorder(BorderFactory.createLineBorder(new Color(220, 53, 69), 1));
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                btnLogout.setBackground(new Color(30, 38, 64));
+                btnLogout.setBorder(BorderFactory.createLineBorder(new Color(255, 255, 255, 51), 1));
+            }
+        });
 
         btnLogout.addActionListener(e -> {
             int result = JOptionPane.showConfirmDialog(
@@ -166,99 +217,98 @@ public class MainFrame extends JFrame {
             }
         });
 
-        southPanel.add(statusBar, BorderLayout.WEST);
-        southPanel.add(btnLogout, BorderLayout.EAST);
-        add(southPanel, BorderLayout.SOUTH);
-    }
+        footerPanel.add(btnLogout, BorderLayout.CENTER);
+        sidebar.add(footerPanel, BorderLayout.SOUTH);
 
-    /**
-     * Erstellt ein individuell gefärbtes Tab-Label.
-     * Doppelte Höhe durch großen Font + vertikales Padding.
-     *
-     * @param title Text des Tabs
-     * @param color Hintergrundfarbe
-     * @return Panel das als Tab-Komponente verwendet wird
-     */
-    private JPanel createTabLabel(String title, Color color) {
-        JPanel panel = new JPanel(new BorderLayout()) {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        // Add Sidebar and Content Panel to Frame
+        add(sidebar, BorderLayout.WEST);
+        add(contentPanel, BorderLayout.CENTER);
 
-                // Prüfen ob dieser Tab gerade aktiv ist
-                int idx = tabbedPane.indexOfTabComponent(this);
-                boolean selected = (tabbedPane.getSelectedIndex() == idx);
-
-                // Hintergrund (etwas heller wenn selektiert)
-                Color bg = selected ? color.brighter() : color;
-                g2.setColor(bg);
-                g2.fillRoundRect(0, 0, getWidth(), getHeight() + 6, 10, 10);
-
-                // Heller Glanz-Streifen oben
-                g2.setColor(new Color(255, 255, 255, selected ? 60 : 30));
-                g2.fillRoundRect(2, 2, getWidth() - 4, getHeight() / 2, 8, 8);
-
-                // Unterer Rand-Highlight wenn selektiert
-                if (selected) {
-                    g2.setColor(Color.WHITE);
-                    g2.setStroke(new BasicStroke(2f));
-                    g2.drawLine(4, getHeight() - 1, getWidth() - 4, getHeight() - 1);
-                }
-                g2.dispose();
-            }
-        };
-        panel.setOpaque(false);
-        panel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
-        // Label mit großem Font (doppelt so groß wie vorher → 20pt statt ~10pt)
-        JLabel label = new JLabel(title, SwingConstants.CENTER);
-        label.setFont(new Font("Segoe UI Emoji", Font.BOLD, 16));
-        label.setForeground(TAB_TEXT);
-        label.setBorder(BorderFactory.createEmptyBorder(10, 18, 10, 18)); // viel Padding = doppelte Höhe
-
-        panel.add(label, BorderLayout.CENTER);
-        return panel;
-    }
-
-    /** Zeichnet alle Tab-Labels neu (damit Selektion sichtbar wird) */
-    private void repaintTabs() {
-        for (int i = 0; i < tabbedPane.getTabCount(); i++) {
-            Component tc = tabbedPane.getTabComponentAt(i);
-            if (tc != null) tc.repaint();
+        // Select Speisekarte by default
+        if (navButtons.length > 0) {
+            navButtons[0].setActive(true);
+            cardLayout.show(contentPanel, titles[0]);
+            // Refresh Speisekarte
+            menuPanel.refresh();
         }
     }
 
     /** Wendet Design-Styles auf das Fenster an */
     private void applyStyles() {
-        getContentPane().setBackground(new Color(245, 245, 250));
+        getContentPane().setBackground(new Color(248, 249, 255));
+    }
 
-        // TabbedPane selbst transparent/minimal stylen
-        tabbedPane.setBackground(new Color(230, 232, 240));
-        tabbedPane.setOpaque(true);
+    /** Custom Button component for Sidebar Navigation */
+    private static class SidebarButton extends JButton {
+        private boolean active = false;
+        private static final Color BG_HOVER = new Color(42, 52, 84); // #2a3454
+        private static final Color BG_ACTIVE = new Color(59, 72, 112); // #3b4870
+        private static final Color ACCENT = new Color(13, 110, 253); // #0d6efd
+        private static final Color TEXT_COLOR = new Color(184, 193, 236); // #b8c1ec
+        private static final Color TEXT_ACTIVE = Color.WHITE;
 
-        // Tab-Leiste etwas höher für bessere Optik (via UI)
-        tabbedPane.setUI(new BasicTabbedPaneUI() {
-            @Override
-            protected int calculateTabHeight(int placement, int index, int fontHeight) {
-                return 54; // Feste Höhe der Tab-Leiste (doppelt von Standard ~26)
+        public SidebarButton(String text) {
+            super(text);
+            setFont(new Font("Segoe UI", Font.PLAIN, 14));
+            setForeground(TEXT_COLOR);
+            setFocusPainted(false);
+            setBorderPainted(false);
+            setContentAreaFilled(false);
+            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            setHorizontalAlignment(SwingConstants.LEFT);
+            // Limit width, pad text
+            setMaximumSize(new Dimension(240, 45));
+            setPreferredSize(new Dimension(240, 45));
+            setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20));
+
+            // Hover effect
+            addMouseListener(new java.awt.event.MouseAdapter() {
+                public void mouseEntered(java.awt.event.MouseEvent evt) {
+                    if (!active) {
+                        setBackground(BG_HOVER);
+                        setForeground(TEXT_ACTIVE);
+                    }
+                }
+                public void mouseExited(java.awt.event.MouseEvent evt) {
+                    if (!active) {
+                        setBackground(null);
+                        setForeground(TEXT_COLOR);
+                    }
+                }
+            });
+        }
+
+        public void setActive(boolean active) {
+            this.active = active;
+            if (active) {
+                setBackground(BG_ACTIVE);
+                setForeground(TEXT_ACTIVE);
+            } else {
+                setBackground(null);
+                setForeground(TEXT_COLOR);
             }
-            @Override
-            protected void paintTabBackground(Graphics g, int placement, int index,
-                                              int x, int y, int w, int h, boolean isSelected) {
-                // Hintergrund nicht vom L&F malen – das macht unser custom Label
+            repaint();
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            // Background
+            if (active) {
+                g2.setColor(BG_ACTIVE);
+                g2.fillRect(0, 0, getWidth(), getHeight());
+                // Left accent border
+                g2.setColor(ACCENT);
+                g2.fillRect(0, 0, 4, getHeight());
+            } else if (getBackground() != null) {
+                g2.setColor(getBackground());
+                g2.fillRect(0, 0, getWidth(), getHeight());
             }
-            @Override
-            protected void paintTabBorder(Graphics g, int placement, int index,
-                                          int x, int y, int w, int h, boolean isSelected) {
-                // Kein Standard-Rahmen
-            }
-            @Override
-            protected void paintFocusIndicator(Graphics g, int placement, Rectangle[] rects,
-                                               int tabIndex, Rectangle iconRect,
-                                               Rectangle textRect, boolean isSelected) {
-                // Kein Fokus-Rahmen
-            }
-        });
+
+            g2.dispose();
+            super.paintComponent(g);
+        }
     }
 }

@@ -7,6 +7,7 @@ import de.restaurant.service.MenuService;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.util.List;
 
@@ -32,13 +33,12 @@ public class MenuPanel extends JPanel implements Refreshable {
 
     /** Konstruktor: Erstellt und initialisiert das Panel */
     public MenuPanel() {
-        setLayout(new BorderLayout(10, 10));
+        setLayout(new BorderLayout(10, 15));
         setBorder(new EmptyBorder(15, 15, 15, 15));
         setBackground(new Color(248, 249, 255));
 
         buildTable();
         buildForm();
-        buildButtons();
         loadData();
     }
 
@@ -64,88 +64,152 @@ public class MenuPanel extends JPanel implements Refreshable {
         menuTable.getColumnModel().getColumn(3).setMaxWidth(100);  // Preis
         menuTable.getColumnModel().getColumn(5).setMaxWidth(90);   // Verfügbar
 
+        // Alignments: Left-align textual columns, right-align Price (index 3)
+        DefaultTableCellRenderer leftRenderer = new DefaultTableCellRenderer();
+        leftRenderer.setHorizontalAlignment(SwingConstants.LEFT);
+        
+        DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
+        rightRenderer.setHorizontalAlignment(SwingConstants.RIGHT);
+        
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
+
+        menuTable.getColumnModel().getColumn(0).setCellRenderer(leftRenderer);
+        menuTable.getColumnModel().getColumn(1).setCellRenderer(leftRenderer);
+        menuTable.getColumnModel().getColumn(2).setCellRenderer(leftRenderer);
+        menuTable.getColumnModel().getColumn(3).setCellRenderer(rightRenderer);
+        menuTable.getColumnModel().getColumn(4).setCellRenderer(leftRenderer);
+        menuTable.getColumnModel().getColumn(5).setCellRenderer(centerRenderer);
+
         // Zeile auswählen → Formular befüllen
         menuTable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) fillFormFromTable();
         });
 
         JScrollPane scrollPane = new JScrollPane(menuTable);
-        scrollPane.setBorder(BorderFactory.createTitledBorder("Aktuelle Speisekarte"));
-        add(scrollPane, BorderLayout.CENTER);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        
+        // Modern styled container for table
+        JPanel tableContainer = new JPanel(new BorderLayout());
+        tableContainer.setBackground(Color.WHITE);
+        tableContainer.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(222, 226, 230), 1, true),
+            BorderFactory.createEmptyBorder(15, 15, 15, 15)
+        ));
+        
+        JLabel titleLabel = new JLabel("Aktuelle Speisekarte");
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        titleLabel.setForeground(new Color(33, 37, 41));
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
+        
+        tableContainer.add(titleLabel, BorderLayout.NORTH);
+        tableContainer.add(scrollPane, BorderLayout.CENTER);
+
+        add(tableContainer, BorderLayout.CENTER);
     }
 
-    /** Erstellt das Eingabeformular für neue/bearbeitete Gerichte */
+    /** Erstellt das Eingabeformular und die Buttons im unteren Bereich */
     private void buildForm() {
-        JPanel formPanel = new JPanel(new GridBagLayout());
-        formPanel.setBackground(new Color(255, 255, 255));
-        formPanel.setBorder(BorderFactory.createTitledBorder("Gericht bearbeiten / hinzufügen"));
+        JPanel formPanel = new JPanel(new BorderLayout(0, 15));
+        formPanel.setBackground(Color.WHITE);
+        formPanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(222, 226, 230), 1, true),
+            BorderFactory.createEmptyBorder(15, 15, 15, 15)
+        ));
 
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 8, 5, 8);
-        gbc.anchor = GridBagConstraints.WEST;
+        JLabel titleLabel = new JLabel("Gericht bearbeiten / hinzufügen");
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        titleLabel.setForeground(new Color(33, 37, 41));
+        formPanel.add(titleLabel, BorderLayout.NORTH);
+
+        // Grid container for horizontal inputs
+        JPanel formGrid = new JPanel(new GridLayout(1, 5, 15, 0));
+        formGrid.setBackground(Color.WHITE);
+
+        // Soft gray border for inputs
+        javax.swing.border.Border softBorder = BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(222, 226, 230), 1, true),
+            BorderFactory.createEmptyBorder(6, 10, 6, 10)
+        );
 
         // Name
-        gbc.gridx = 0; gbc.gridy = 0;
-        formPanel.add(new JLabel("Name *:"), gbc);
-        gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL; gbc.weightx = 1.0;
-        tfName = new JTextField(20);
-        formPanel.add(tfName, gbc);
+        tfName = new JTextField();
+        tfName.setBorder(softBorder);
+        tfName.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        formGrid.add(createFormGroup("Name *", tfName));
 
         // Kategorie
-        gbc.gridx = 0; gbc.gridy = 1; gbc.fill = GridBagConstraints.NONE; gbc.weightx = 0;
-        formPanel.add(new JLabel("Kategorie *:"), gbc);
-        gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL;
         cbCategory = new JComboBox<>(MenuService.CATEGORIES);
-        formPanel.add(cbCategory, gbc);
+        cbCategory.setBackground(Color.WHITE);
+        cbCategory.setBorder(BorderFactory.createLineBorder(new Color(222, 226, 230), 1));
+        cbCategory.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        formGrid.add(createFormGroup("Kategorie *", cbCategory));
 
         // Preis
-        gbc.gridx = 0; gbc.gridy = 2; gbc.fill = GridBagConstraints.NONE;
-        formPanel.add(new JLabel("Preis (€) *:"), gbc);
-        gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL;
-        tfPrice = new JTextField(10);
-        formPanel.add(tfPrice, gbc);
+        tfPrice = new JTextField();
+        tfPrice.setBorder(softBorder);
+        tfPrice.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        formGrid.add(createFormGroup("Preis (€) *", tfPrice));
 
         // Beschreibung
-        gbc.gridx = 0; gbc.gridy = 3; gbc.fill = GridBagConstraints.NONE;
-        formPanel.add(new JLabel("Beschreibung:"), gbc);
-        gbc.gridx = 1; gbc.fill = GridBagConstraints.HORIZONTAL;
-        tfDescription = new JTextField(30);
-        formPanel.add(tfDescription, gbc);
+        tfDescription = new JTextField();
+        tfDescription.setBorder(softBorder);
+        tfDescription.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        formGrid.add(createFormGroup("Beschreibung", tfDescription));
 
-        // Verfügbar
-        gbc.gridx = 0; gbc.gridy = 4; gbc.fill = GridBagConstraints.NONE;
-        formPanel.add(new JLabel("Verfügbar:"), gbc);
-        gbc.gridx = 1;
+        // Verfügbar (Checkbox)
         chkAvailable = new JCheckBox();
         chkAvailable.setSelected(true);
         chkAvailable.setBackground(Color.WHITE);
-        formPanel.add(chkAvailable, gbc);
+        chkAvailable.setFocusPainted(false);
+        JPanel chkWrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 5));
+        chkWrapper.setBackground(Color.WHITE);
+        chkWrapper.add(chkAvailable);
+        formGrid.add(createFormGroup("Verfügbar", chkWrapper));
 
-        add(formPanel, BorderLayout.EAST);
+        formPanel.add(formGrid, BorderLayout.CENTER);
+
+        // Create buttons
+        btnAdd    = createButton("💾 Speichern / Hinzufügen", new Color(13, 110, 253));
+        btnClear  = createButton("✖ Leeren", new Color(110, 120, 129));
+        btnDelete = createButton("🗑 Löschen", new Color(220, 53, 69));
+        btnUpdate = new JButton(); // unused dummy to avoid null references
+
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        btnPanel.setBackground(Color.WHITE);
+        btnPanel.add(btnAdd);
+        btnPanel.add(btnClear);
+        btnPanel.add(btnDelete);
+
+        formPanel.add(btnPanel, BorderLayout.SOUTH);
+
+        add(formPanel, BorderLayout.SOUTH);
+
+        // Action Listeners
+        btnAdd.addActionListener(e -> {
+            int row = menuTable.getSelectedRow();
+            if (row >= 0) {
+                updateMenuItem();
+            } else {
+                addMenuItem();
+            }
+        });
+        btnClear.addActionListener(e -> clearForm());
+        btnDelete.addActionListener(e -> deleteMenuItem());
     }
 
-    /** Erstellt die Aktions-Buttons */
-    private void buildButtons() {
-        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
-        btnPanel.setBackground(new Color(248, 249, 255));
-
-        btnAdd    = createButton("➕ Hinzufügen",  new Color(46, 139, 87));
-        btnUpdate = createButton("✏️ Aktualisieren", new Color(70, 130, 180));
-        btnDelete = createButton("🗑 Löschen",      new Color(178, 34, 34));
-        btnClear  = createButton("✖ Leeren",        new Color(120, 120, 120));
-
-        btnPanel.add(btnAdd);
-        btnPanel.add(btnUpdate);
-        btnPanel.add(btnDelete);
-        btnPanel.add(btnClear);
-
-        add(btnPanel, BorderLayout.SOUTH);
-
-        // Event-Handler
-        btnAdd.addActionListener(e    -> addMenuItem());
-        btnUpdate.addActionListener(e -> updateMenuItem());
-        btnDelete.addActionListener(e -> deleteMenuItem());
-        btnClear.addActionListener(e  -> clearForm());
+    /** Helper method to create stacked form group */
+    private JPanel createFormGroup(String labelText, Component field) {
+        JPanel panel = new JPanel(new BorderLayout(0, 5));
+        panel.setBackground(Color.WHITE);
+        
+        JLabel label = new JLabel(labelText);
+        label.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        label.setForeground(new Color(108, 117, 125)); // #6c757d
+        
+        panel.add(label, BorderLayout.NORTH);
+        panel.add(field, BorderLayout.CENTER);
+        return panel;
     }
 
     // ---- Aktionen ----
@@ -267,16 +331,27 @@ public class MenuPanel extends JPanel implements Refreshable {
         JOptionPane.showMessageDialog(this, message, "Fehler", JOptionPane.ERROR_MESSAGE);
     }
 
-    /** Erstellt einen gestylten Button */
+    /** Erstellt einen gestylten Button mit Hover-Effekt */
     private JButton createButton(String text, Color bg) {
         JButton btn = new JButton(text);
         btn.setBackground(bg);
         btn.setForeground(Color.WHITE);
-        btn.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 13));
         btn.setFocusPainted(false);
         btn.setBorderPainted(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btn.setPreferredSize(new Dimension(155, 35));
+        btn.setPreferredSize(new Dimension(180, 36));
+        
+        btn.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                btn.setBackground(bg.brighter());
+            }
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                btn.setBackground(bg);
+            }
+        });
         return btn;
     }
 
