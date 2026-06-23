@@ -40,7 +40,7 @@ public class InvoiceDAO {
      * @return Die gespeicherte Rechnung mit zugewiesener ID
      */
     public Invoice insert(Invoice invoice) {
-        String sql = "INSERT INTO invoices (order_id, total_amount, tax_amount, issue_date, paid) VALUES (?,?,?,?,?)";
+        String sql = "INSERT INTO invoices (order_id, total_amount, tax_amount, issue_date, paid, payment_method) VALUES (?,?,?,?,?,?)";
         try (PreparedStatement stmt = connection.prepareStatement(sql,
                 Statement.RETURN_GENERATED_KEYS)) {
 
@@ -49,6 +49,7 @@ public class InvoiceDAO {
             stmt.setDouble(3, invoice.getTaxAmount());
             stmt.setString(4, invoice.getIssueDate().format(FORMATTER));
             stmt.setInt(5, invoice.isPaid() ? 1 : 0);
+            stmt.setString(6, invoice.getPaymentMethod());
             stmt.executeUpdate();
 
             ResultSet keys = stmt.getGeneratedKeys();
@@ -63,14 +64,34 @@ public class InvoiceDAO {
     }
 
     /**
+     * Erstellt eine neue Rechnung für eine Bestellung.
+     * @param order Die Bestellung
+     * @return Die neu erstellte Rechnung mit zugewiesener ID
+     */
+    public Invoice insertForOrder(Order order) {
+        Invoice invoice = new Invoice(order, LocalDateTime.now());
+        return insert(invoice);
+    }
+
+    /**
      * Markiert eine Rechnung als bezahlt.
      * @param invoiceId Die Rechnungs-ID
      */
     public void markAsPaid(int invoiceId) {
-        String sql = "UPDATE invoices SET paid=1 WHERE id=?";
+        markAsPaid(invoiceId, "BAR");
+    }
+
+    /**
+     * Markiert eine Rechnung mit einer bestimmten Zahlungsmethode als bezahlt.
+     * @param invoiceId Die Rechnungs-ID
+     * @param paymentMethod Die Zahlungsmethode
+     */
+    public void markAsPaid(int invoiceId, String paymentMethod) {
+        String sql = "UPDATE invoices SET paid=1, payment_method=? WHERE id=?";
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
 
-            stmt.setInt(1, invoiceId);
+            stmt.setString(1, paymentMethod);
+            stmt.setInt(2, invoiceId);
             stmt.executeUpdate();
 
         } catch (SQLException e) {
@@ -150,7 +171,8 @@ public class InvoiceDAO {
                 rs.getDouble("total_amount"),
                 rs.getDouble("tax_amount"),
                 LocalDateTime.parse(rs.getString("issue_date"), FORMATTER),
-                rs.getInt("paid") == 1
+                rs.getInt("paid") == 1,
+                rs.getString("payment_method")
         );
     }
 }

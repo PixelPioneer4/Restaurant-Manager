@@ -57,11 +57,54 @@ CREATE TABLE IF NOT EXISTS reservations (
 
 -- Rechnungen
 CREATE TABLE IF NOT EXISTS invoices (
-    id           INTEGER PRIMARY KEY AUTOINCREMENT,
-    order_id     INTEGER NOT NULL UNIQUE,
-    total_amount REAL    NOT NULL,
-    tax_amount   REAL    NOT NULL,  -- 19% MwSt.
-    issue_date   TEXT    NOT NULL,
-    paid         INTEGER DEFAULT 0, -- 0 = offen, 1 = bezahlt
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_id       INTEGER NOT NULL UNIQUE,
+    total_amount   REAL    NOT NULL,
+    tax_amount     REAL    NOT NULL,  -- 19% MwSt.
+    issue_date     TEXT    NOT NULL,
+    paid           INTEGER DEFAULT 0, -- 0 = offen, 1 = bezahlt
+    payment_method TEXT    DEFAULT 'BAR',
     FOREIGN KEY (order_id) REFERENCES orders(id)
 );
+
+CREATE TABLE IF NOT EXISTS ingredients (
+    id        INTEGER PRIMARY KEY AUTOINCREMENT,
+    name      TEXT    NOT NULL,
+    quantity  REAL    NOT NULL DEFAULT 0,
+    unit      TEXT    NOT NULL,
+    min_stock REAL    NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS stock_movements (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    ingredient_id  INTEGER NOT NULL REFERENCES ingredients(id),
+    movement_type  TEXT    NOT NULL,
+    amount         REAL    NOT NULL,
+    movement_date  TEXT    NOT NULL,
+    note           TEXT
+);
+
+CREATE TABLE IF NOT EXISTS expenses (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    category     TEXT NOT NULL,
+    amount       REAL NOT NULL,
+    expense_date TEXT NOT NULL,
+    description  TEXT
+);
+
+CREATE TABLE IF NOT EXISTS users (
+    id       INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT    NOT NULL UNIQUE,
+    password TEXT    NOT NULL,
+    role     TEXT    NOT NULL DEFAULT 'STAFF'
+);
+
+CREATE TABLE IF NOT EXISTS menu_item_ingredients (
+    menu_item_id  INTEGER NOT NULL REFERENCES menu_items(id),
+    ingredient_id INTEGER NOT NULL REFERENCES ingredients(id),
+    amount_needed REAL    NOT NULL,
+    PRIMARY KEY (menu_item_id, ingredient_id)
+);
+
+-- Spalte payment_method zu invoices hinzufügen (falls nicht existiert)
+ALTER TABLE invoices ADD COLUMN payment_method TEXT DEFAULT 'BAR';

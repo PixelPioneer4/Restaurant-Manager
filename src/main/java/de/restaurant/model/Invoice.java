@@ -26,6 +26,9 @@ public class Invoice {
     /** Bezahlstatus: false = offen, true = bezahlt */
     private boolean paid;
 
+    /** Zahlungsmethode: BAR, KARTE, GUTSCHEIN, RECHNUNG */
+    private String paymentMethod = "BAR";
+
     // ---- Steuerkonstante ----
 
     /** MwSt.-Satz in Deutschland */
@@ -41,17 +44,19 @@ public class Invoice {
         // MwSt. aus Bruttobetrag herausrechnen (inklusiv)
         this.taxAmount   = totalAmount * TAX_RATE / (1 + TAX_RATE);
         this.paid        = false;
+        this.paymentMethod = "BAR";
     }
 
     /** Vollständiger Konstruktor – wird beim Laden aus der DB verwendet */
     public Invoice(int id, Order order, double totalAmount, double taxAmount,
-                   LocalDateTime issueDate, boolean paid) {
+                   LocalDateTime issueDate, boolean paid, String paymentMethod) {
         this.id          = id;
         this.order       = order;
         this.totalAmount = totalAmount;
         this.taxAmount   = taxAmount;
         this.issueDate   = issueDate;
         this.paid        = paid;
+        this.paymentMethod = paymentMethod;
     }
 
     // ---- Berechnungsmethode ----
@@ -80,6 +85,9 @@ public class Invoice {
 
     public boolean isPaid()                     { return paid; }
     public void setPaid(boolean p)              { this.paid = p; }
+
+    public String getPaymentMethod()            { return paymentMethod; }
+    public void setPaymentMethod(String pm)     { this.paymentMethod = pm; }
 
     @Override
     public String toString() {

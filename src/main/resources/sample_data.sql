@@ -42,3 +42,48 @@ INSERT OR IGNORE INTO menu_items (name, category, price, description, available)
     ('Rotwein (0,2l)',       'Getränk', 6.20, 'Dornfelder, halbtrocken',        1),
     ('Bier vom Fass (0,5l)', 'Getränk', 4.50, 'Pilsner',                        1),
     ('Espresso',             'Getränk', 2.80, 'Doppelter Espresso',             1);
+
+INSERT OR IGNORE INTO ingredients (id, name, quantity, unit, min_stock)
+VALUES
+  (1, 'Mehl',        50.0, 'kg',  10.0),
+  (2, 'Tomaten',     30.0, 'kg',   5.0),
+  (3, 'Käse',        15.0, 'kg',   3.0),
+  (4, 'Olivenöl',    10.0, 'L',    2.0),
+  (5, 'Salz',        20.0, 'kg',   2.0),
+  (6, 'Hähnchenb.',  25.0, 'kg',   5.0),
+  (7, 'Rindfleisch', 20.0, 'kg',   5.0),
+  (8, 'Nudeln',      40.0, 'kg',   8.0);
+
+-- Verknüpfung zwischen Gerichten und Zutaten (Rezepturen)
+INSERT OR IGNORE INTO menu_item_ingredients (menu_item_id, ingredient_id, amount_needed) VALUES
+    -- Tomatensuppe (ID 1) -> Tomaten 0.3kg, Olivenöl 0.01L, Salz 0.005kg
+    (1, 2, 0.3),
+    (1, 4, 0.01),
+    (1, 5, 0.005),
+    
+    -- Bruschetta (ID 2) -> Tomaten 0.15kg, Olivenöl 0.02L, Mehl 0.05kg
+    (2, 2, 0.15),
+    (2, 4, 0.02),
+    (2, 1, 0.05),
+    
+    -- Wiener Schnitzel (ID 5) -> Mehl 0.1kg
+    (5, 1, 0.1),
+    
+    -- Rinderfilet (ID 6) -> Rindfleisch 0.22kg, Salz 0.01kg
+    (6, 7, 0.22),
+    (6, 5, 0.01),
+    
+    -- Pasta Carbonara (ID 8) -> Nudeln 0.15kg, Käse 0.05kg, Salz 0.01kg
+    (8, 8, 0.15),
+    (8, 3, 0.05),
+    (8, 5, 0.01),
+    
+    -- Hähnchen Tikka (ID 10) -> Hähnchenbrust 0.25kg, Salz 0.01kg
+    (10, 6, 0.25),
+    (10, 5, 0.01);
+
+-- Beispiellogin-Daten für Benutzer
+INSERT OR IGNORE INTO users (id, username, password, role) VALUES
+    (1, 'admin',   'admin123',   'ADMIN'),
+    (2, 'manager', 'manager123', 'MANAGER'),
+    (3, 'staff',   'staff123',   'STAFF');

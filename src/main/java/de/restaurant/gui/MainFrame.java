@@ -23,6 +23,8 @@ public class MainFrame extends JFrame {
         new Color(140,  60, 170),  // 📅 Reservierung – Violett
         new Color(190, 140,  20),  // 🧾 Rechnungen   – Gold
         new Color(40,  160, 160),  // 📊 Statistiken  – Petrol
+        new Color(180, 80,  120),  // 📦 Inventar     – Pink/Weinrot
+        new Color(150, 40,   40),  // 💸 Ausgaben     – Dunkelrot
     };
 
     private static final Color TAB_TEXT       = Color.WHITE;
@@ -38,6 +40,8 @@ public class MainFrame extends JFrame {
     private ReservationPanel reservationPanel;
     private InvoicePanel     invoicePanel;
     private StatisticsPanel  statisticsPanel;
+    private InventoryPanel   inventoryPanel;
+    private ExpensePanel     expensePanel;
 
     /** Konstruktor: Erstellt und konfiguriert das Hauptfenster */
     public MainFrame() {
@@ -85,6 +89,8 @@ public class MainFrame extends JFrame {
         reservationPanel = new ReservationPanel();
         invoicePanel     = new InvoicePanel();
         statisticsPanel  = new StatisticsPanel();
+        inventoryPanel   = new InventoryPanel();
+        expensePanel     = new ExpensePanel();
     }
 
     /** Fügt die Panels zum TabbedPane hinzu und setzt individuelle Tab-Renderer */
@@ -95,11 +101,14 @@ public class MainFrame extends JFrame {
             "👤  Kunden",
             "📅  Reservierungen",
             "🧾  Rechnungen",
-            "📊  Statistiken"
+            "📊  Statistiken",
+            "📦  Inventar",
+            "💸  Ausgaben"
         };
         Component[] panels = {
             menuPanel, orderPanel, customerPanel,
-            reservationPanel, invoicePanel, statisticsPanel
+            reservationPanel, invoicePanel, statisticsPanel,
+            inventoryPanel, expensePanel
         };
 
         for (int i = 0; i < titles.length; i++) {
@@ -120,11 +129,46 @@ public class MainFrame extends JFrame {
 
         add(tabbedPane, BorderLayout.CENTER);
 
-        // Statusleiste
+        // Statusleiste mit Abmelden-Button
+        JPanel southPanel = new JPanel(new BorderLayout(5, 0));
+        southPanel.setBorder(BorderFactory.createEtchedBorder());
+        southPanel.setBackground(new Color(240, 240, 245));
+
         JLabel statusBar = new JLabel("  Restaurant Management System v1.0  |  Bereit");
-        statusBar.setBorder(BorderFactory.createEtchedBorder());
         statusBar.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        add(statusBar, BorderLayout.SOUTH);
+
+        JButton btnLogout = new JButton("Abmelden");
+        btnLogout.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        btnLogout.setFocusPainted(false);
+        btnLogout.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        btnLogout.addActionListener(e -> {
+            int result = JOptionPane.showConfirmDialog(
+                    MainFrame.this,
+                    "Wirklich abmelden?",
+                    "Abmelden",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE
+            );
+            if (result == JOptionPane.YES_OPTION) {
+                dispose();
+                de.restaurant.service.AuthService.logout();
+                
+                // Login-Dialog erneut anzeigen
+                LoginDialog login = new LoginDialog(null);
+                login.setVisible(true);
+                if (login.isLoginSuccessful()) {
+                    MainFrame frame = new MainFrame();
+                    frame.setVisible(true);
+                } else {
+                    System.exit(0);
+                }
+            }
+        });
+
+        southPanel.add(statusBar, BorderLayout.WEST);
+        southPanel.add(btnLogout, BorderLayout.EAST);
+        add(southPanel, BorderLayout.SOUTH);
     }
 
     /**

@@ -1,6 +1,7 @@
 package de.restaurant;
 
 import de.restaurant.dao.DatabaseConnection;
+import de.restaurant.gui.LoginDialog;
 import de.restaurant.gui.MainFrame;
 
 import javax.swing.*;
@@ -11,7 +12,8 @@ import javax.swing.*;
  * Startreihenfolge:
  *  1. Look & Feel auf System-Standard setzen
  *  2. Datenbankverbindung herstellen (Schema + Beispieldaten)
- *  3. Hauptfenster öffnen
+ *  3. Login-Dialog anzeigen
+ *  4. Bei Erfolg: Hauptfenster öffnen
  */
 public class Main {
 
@@ -35,9 +37,17 @@ public class Main {
                 // Datenbankverbindung herstellen und Schema initialisieren
                 DatabaseConnection.getInstance();
 
-                // Hauptfenster erstellen und anzeigen
-                MainFrame frame = new MainFrame();
-                frame.setVisible(true);
+                // Login-Dialog anzeigen
+                LoginDialog login = new LoginDialog(null);
+                login.setVisible(true);
+
+                if (login.isLoginSuccessful()) {
+                    // Hauptfenster erstellen und anzeigen
+                    MainFrame frame = new MainFrame();
+                    frame.setVisible(true);
+                } else {
+                    System.exit(0);
+                }
 
             } catch (Exception e) {
                 // Schwerwiegender Fehler beim Start → Meldung anzeigen und beenden

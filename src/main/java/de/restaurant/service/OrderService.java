@@ -1,6 +1,7 @@
 package de.restaurant.service;
 
 import de.restaurant.dao.OrderDAO;
+import de.restaurant.dao.MenuItemIngredientDAO;
 import de.restaurant.exception.ValidationException;
 import de.restaurant.model.*;
 
@@ -20,10 +21,16 @@ public class OrderService {
 
     /** Datenzugriffsobjekt für Bestellungen */
     private final OrderDAO orderDAO;
+    private final InvoiceService invoiceService;
+    private final InventoryService inventoryService;
+    private final MenuItemIngredientDAO menuItemIngredientDAO;
 
     /** Konstruktor: erzeugt den OrderDAO */
     public OrderService() {
         this.orderDAO = new OrderDAO();
+        this.invoiceService = new InvoiceService();
+        this.inventoryService = new InventoryService();
+        this.menuItemIngredientDAO = new MenuItemIngredientDAO();
     }
 
     /**
@@ -49,7 +56,20 @@ public class OrderService {
         order.setItems(items);
 
         // In der Datenbank speichern
-        return orderDAO.insert(order);
+        Order savedOrder = orderDAO.insert(order);
+
+        // Lagerbestand abziehen
+        for (OrderItem item : items) {
+            List<MenuItemIngredient> recipe = menuItemIngredientDAO.findByMenuItemId(item.getMenuItem().getId());
+            for (MenuItemIngredient ingredientDep : recipe) {
+                double amountNeeded = ingredientDep.getAmountNeeded() * item.getQuantity();
+                String note = "Bestellung #" + savedOrder.getId() + " - " + item.getMenuItem().getName();
+                inventoryService.removeStock(ingredientDep.getIngredientId(), amountNeeded, note);
+            }
+        }
+
+        invoiceService.createForOrder(savedOrder);
+        return savedOrder;
     }
 
     /**
