@@ -65,3 +65,28 @@ CREATE TABLE IF NOT EXISTS invoices (
     paid         INTEGER DEFAULT 0, -- 0 = offen, 1 = bezahlt
     FOREIGN KEY (order_id) REFERENCES orders(id)
 );
+
+CREATE TABLE IF NOT EXISTS ingredients (
+    id        INTEGER PRIMARY KEY AUTOINCREMENT,
+    name      TEXT    NOT NULL,
+    quantity  REAL    NOT NULL DEFAULT 0,
+    unit      TEXT    NOT NULL,
+    min_stock REAL    NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS stock_movements (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    ingredient_id  INTEGER NOT NULL REFERENCES ingredients(id),
+    movement_type  TEXT    NOT NULL,
+    amount         REAL    NOT NULL,
+    movement_date  TEXT    NOT NULL,
+    note           TEXT
+);
+
+CREATE TABLE IF NOT EXISTS expenses (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    category     TEXT NOT NULL,
+    amount       REAL NOT NULL,
+    expense_date TEXT NOT NULL,
+    description  TEXT
+);
