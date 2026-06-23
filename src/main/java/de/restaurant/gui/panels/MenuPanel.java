@@ -51,7 +51,53 @@ public class MenuPanel extends JPanel implements Refreshable {
             @Override public boolean isCellEditable(int row, int col) { return false; }
         };
 
-        menuTable = new JTable(tableModel);
+        // Custom JTable with row hover effects and customized selection colors
+        menuTable = new JTable(tableModel) {
+            private int hoveredRow = -1;
+
+            {
+                addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+                    @Override
+                    public void mouseMoved(java.awt.event.MouseEvent e) {
+                        int row = rowAtPoint(e.getPoint());
+                        if (row != hoveredRow) {
+                            hoveredRow = row;
+                            repaint();
+                        }
+                        if (row >= 0) {
+                            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                        } else {
+                            setCursor(Cursor.getDefaultCursor());
+                        }
+                    }
+                });
+                addMouseListener(new java.awt.event.MouseAdapter() {
+                    @Override
+                    public void mouseExited(java.awt.event.MouseEvent e) {
+                        hoveredRow = -1;
+                        setCursor(Cursor.getDefaultCursor());
+                        repaint();
+                    }
+                });
+            }
+
+            @Override
+            public Component prepareRenderer(javax.swing.table.TableCellRenderer renderer, int row, int column) {
+                Component c = super.prepareRenderer(renderer, row, column);
+                if (!isRowSelected(row)) {
+                    if (row == hoveredRow) {
+                        c.setBackground(new Color(240, 244, 250)); // soft blue-gray hover highlight
+                    } else {
+                        c.setBackground(row % 2 == 0 ? Color.WHITE : new Color(249, 251, 253)); // zebra striping
+                    }
+                } else {
+                    c.setBackground(new Color(215, 230, 255)); // softer selection color
+                    c.setForeground(Color.BLACK);
+                }
+                return c;
+            }
+        };
+
         menuTable.setRowHeight(28);
         menuTable.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         menuTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
@@ -126,16 +172,10 @@ public class MenuPanel extends JPanel implements Refreshable {
         JPanel formGrid = new JPanel(new GridLayout(1, 5, 15, 0));
         formGrid.setBackground(Color.WHITE);
 
-        // Soft gray border for inputs
-        javax.swing.border.Border softBorder = BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(222, 226, 230), 1, true),
-            BorderFactory.createEmptyBorder(6, 10, 6, 10)
-        );
-
         // Name
         tfName = new JTextField();
-        tfName.setBorder(softBorder);
         tfName.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        addInputEffects(tfName);
         formGrid.add(createFormGroup("Name *", tfName));
 
         // Kategorie
@@ -143,18 +183,19 @@ public class MenuPanel extends JPanel implements Refreshable {
         cbCategory.setBackground(Color.WHITE);
         cbCategory.setBorder(BorderFactory.createLineBorder(new Color(222, 226, 230), 1));
         cbCategory.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        cbCategory.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         formGrid.add(createFormGroup("Kategorie *", cbCategory));
 
         // Preis
         tfPrice = new JTextField();
-        tfPrice.setBorder(softBorder);
         tfPrice.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        addInputEffects(tfPrice);
         formGrid.add(createFormGroup("Preis (€) *", tfPrice));
 
         // Beschreibung
         tfDescription = new JTextField();
-        tfDescription.setBorder(softBorder);
         tfDescription.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        addInputEffects(tfDescription);
         formGrid.add(createFormGroup("Beschreibung", tfDescription));
 
         // Verfügbar (Checkbox)
@@ -162,6 +203,7 @@ public class MenuPanel extends JPanel implements Refreshable {
         chkAvailable.setSelected(true);
         chkAvailable.setBackground(Color.WHITE);
         chkAvailable.setFocusPainted(false);
+        chkAvailable.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         JPanel chkWrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 5));
         chkWrapper.setBackground(Color.WHITE);
         chkWrapper.add(chkAvailable);
@@ -353,6 +395,58 @@ public class MenuPanel extends JPanel implements Refreshable {
             }
         });
         return btn;
+    }
+
+    /** Fügt Hover- und Fokus-Effekte zu einem Textfeld hinzu */
+    private void addInputEffects(JTextField tf) {
+        Color borderNormal = new Color(222, 226, 230); // #dee2e6
+        Color borderHover  = new Color(173, 181, 189); // #adb5bd
+        Color borderFocus  = new Color(13, 110, 253);  // #0d6efd
+        
+        javax.swing.border.Border padding = BorderFactory.createEmptyBorder(6, 10, 6, 10);
+        
+        tf.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(borderNormal, 1, true),
+            padding
+        ));
+        
+        tf.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                if (!tf.isFocusOwner()) {
+                    tf.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(borderHover, 1, true),
+                        padding
+                    ));
+                }
+            }
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                if (!tf.isFocusOwner()) {
+                    tf.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(borderNormal, 1, true),
+                        padding
+                    ));
+                }
+            }
+        });
+        
+        tf.addFocusListener(new java.awt.event.FocusListener() {
+            @Override
+            public void focusGained(java.awt.event.FocusEvent e) {
+                tf.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(borderFocus, 1, true),
+                    padding
+                ));
+            }
+            @Override
+            public void focusLost(java.awt.event.FocusEvent e) {
+                tf.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(borderNormal, 1, true),
+                    padding
+                ));
+            }
+        });
     }
 
     /** Refreshable: Daten neu laden bei Tab-Wechsel */
